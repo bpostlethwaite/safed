@@ -1,0 +1,79 @@
+{{ define "content" }}
+<div id="admin-panel">
+    <h2 class="header">New User</h2>
+    <h4 style="color:red;">{{.NewUserError}}</h4>
+    <div class="safe-form">
+        <input type="text"
+               value="username"
+               class="short no-borders"
+        >
+        <input type="text"
+               value="password"
+               class="no-borders"
+        >
+        <input type="text"
+               value="admin"
+               class="short no-borders"
+        >
+    </div>
+    <form action="admin" method="post" class="safe-form">
+        <input type="text"
+               name="username"
+               placeholder="username"
+               class="short"
+        >
+        <input type="password"
+               name="password"
+               placeholder="password"
+        >
+        <input
+            id="new-user-form__admin"
+            type="checkbox"
+            name="admin"
+            class="pushsides"
+        >
+        <input type="submit" value="create" class="short">
+    </form>
+    <hr>
+    <h2 class="header">Users</h2>
+    <h4 style="color:red;">{{.UpdateUserError}}</h4>
+    <div class="safe-form">
+        <input type="text"
+               value="username"
+               class="short no-borders"
+        >
+        <input type="text"
+               value="password"
+               class="no-borders"
+        >
+        <input type="text"
+               value="admin"
+               class="short no-borders"
+        >
+    </div>
+    {{range .Users}}
+    <div class="container">
+        <form action="admin" method="post" class="safe-form">
+            <input type="hidden" name="_method" value="update" />
+            <input type="text"
+                   name="username"
+                   value="{{.Name}}"
+                   class="short"
+                   readonly
+            >
+            <input type="password"
+                   name="password"
+                   placeholder="enter new password here"
+                   value="{{.Pass}}"
+            >
+            <input type="checkbox"
+                   name="admin"
+                   class="pushsides"
+                   {{if .Admin}}checked{{end}}
+            >
+            <input type="submit" value="update" class="short">
+        </form>
+    </div>
+    {{end}}
+</div>
+{{end}}

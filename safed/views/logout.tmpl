@@ -1,0 +1,7 @@
+{{ define "content" }}
+{{ template "header" . }}
+<div class="content">
+    <div>You are logged in {{.Username}}...</div>
+    {{ template "logoutform" . }}
+</div>
+{{ end }}

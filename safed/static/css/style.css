@@ -1,0 +1,137 @@
+@import url(https://fonts.googleapis.com/css?family=Exo:100,200,400);
+@import url(https://fonts.googleapis.com/css?family=Source+Sans+Pro:700,400,300);
+
+html {
+    height: 100%;
+    width: 100%;
+}
+
+* {
+    font-family: 'Exo', sans-serif !important;
+}
+
+body{
+    margin: 0;
+    padding: 0;
+    background: black;
+    color: #fff;
+    height: 100%;
+    width: 100%;
+}
+
+.content{
+    position: relative;
+    top: 50%;
+    transform: translate(0, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-flow: row wrap;
+}
+
+.header{
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.header div{
+    color: #fff;
+    font-size: 35px;
+    font-weight: 200;
+}
+
+.header div span{
+    color: #5379fa !important;
+}
+
+.safe-form input[type=text]{
+    width: 250px;
+    height: 30px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 2px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 4px;
+}
+
+.safe-form input[type=password]{
+    width: 250px;
+    height: 30px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 2px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 4px;
+    margin-top: 10px;
+}
+
+.safe-form input[type=submit]{
+    width: 260px;
+    height: 35px;
+    background: #fff;
+    border: 1px solid #fff;
+    cursor: pointer;
+    border-radius: 2px;
+    color: #a18d6c;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 6px;
+    margin-top: 10px;
+}
+
+.safe-form input[type=submit]:hover{
+    opacity: 0.8;
+}
+
+.safe-form input[type=submit]:active{
+    opacity: 0.6;
+}
+
+.safe-form input[type=text]:focus{
+    outline: none;
+    border: 1px solid rgba(255,255,255,0.9);
+}
+
+.safe-form input[type=password]:focus{
+    outline: none;
+    border: 1px solid rgba(255,255,255,0.9);
+}
+
+.safe-form input[type=submit]:focus{
+    outline: none;
+}
+
+::-webkit-input-placeholder{
+    color: rgba(255,255,255,0.6);
+}
+
+::-moz-input-placeholder{
+    color: rgba(255,255,255,0.6);
+}
+
+.short {
+    width: 100px !important;
+}
+
+.pushsides {
+    margin-left: 16px;
+    margin-right: 16px;
+}
+
+hr {
+    height: 10px;
+    border: 0;
+    box-shadow: 0 10px 10px -10px rgba(255,255,255,0.6) inset;
+}
+
+.no-borders {
+    border: 0 !important;
+}
+
+#admin-panel {
+    padding-left: 10px;
+}
