@@ -18,6 +18,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	ServerError = iota
+	NewUserError
+	UpdateUserError
+	AuthError
+)
+
 type App struct {
 	Name         string
 	SigningKey   []byte
@@ -34,9 +41,25 @@ type App struct {
 var wstack = errors.WithStack
 var wmsg = errors.WithMessage
 
-type AppErr struct {
+type AppError struct {
 	error
 	Code int
+}
+
+func (err AppError) ServerError() bool {
+	return err.Code == ServerError
+}
+
+func (err AppError) NewUserError() bool {
+	return err.Code == NewUserError
+}
+
+func (err AppError) UpdateUserError() bool {
+	return err.Code == UpdateUserError
+}
+
+func (err AppError) AuthError() bool {
+	return err.Code == AuthError
 }
 
 func (app App) LogError(err error) {
@@ -168,35 +191,16 @@ func SafedRouter(app App) http.Handler {
 
 	// Protected Views
 	r.Group(func(r chi.Router) {
-		// Seek, verify and validate JWT tokens
 		r.Use(jwtauth.Verifier(app.Auth))
-
-		r.Use(app.Authenticator(HandlerOpts{View: true}))
-
+		r.Use(app.Authenticator)
 		r.Get("/", app.SplashView)
-	})
-
-	// Protected API
-	r.Group(func(r chi.Router) {
-		// Seek, verify and validate JWT tokens
-		r.Use(jwtauth.Verifier(app.Auth))
-
-		opts := HandlerOpts{View: false}
-		r.Use(app.Authenticator(opts))
-		r.Use(app.UserContext(opts))
-
 		r.Post("/logout", app.Logout)
 	})
 
 	// Admin Protected Views
 	r.Group(func(r chi.Router) {
-		// Seek, verify and validate JWT tokens
 		r.Use(jwtauth.Verifier(app.Auth))
-
-		opts := HandlerOpts{View: true, Admin: true}
-		r.Use(app.Authenticator(opts))
-		r.Use(app.UserContext(opts))
-
+		r.Use(app.AdminAuthenticator)
 		r.Get("/admin", app.AdminView)
 		r.Post("/admin", app.AdminPost)
 	})

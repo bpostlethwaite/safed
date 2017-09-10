@@ -1,7 +1,7 @@
 {{ define "content" }}
 <div id="admin-panel">
     <h2 class="header">New User</h2>
-    <h4 style="color:red;">{{.NewUserError}}</h4>
+    {{if .Error.NewUserError}}<h4 style="color:red;">{{.Error.Error}}</h4>{{end}}
     <div class="safe-form">
         <input type="text"
                value="username"
@@ -36,7 +36,7 @@
     </form>
     <hr>
     <h2 class="header">Users</h2>
-    <h4 style="color:red;">{{.UpdateUserError}}</h4>
+    {{if .Error.UpdateUserError}}<h4 style="color:red;">{{.Error.Error}}</h4>{{end}}
     <div class="safe-form">
         <input type="text"
                value="username"

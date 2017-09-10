@@ -42,3 +42,21 @@ func newUser(username, password string) (*User, error) {
 		Pass: string(hash),
 	}, nil
 }
+
+func updatePassword(user *User, password string) error {
+
+	tmpUser := *user
+	tmpUser.Pass = password
+	err := validator.Validate(tmpUser)
+	if err != nil {
+		return wstack(err)
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return wstack(err)
+	}
+
+	user.Pass = string(hash)
+	return nil
+}

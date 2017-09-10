@@ -13,34 +13,25 @@ import (
 )
 
 type PageContext struct {
-	NewUserError    string
-	UpdateUserError string
-	Title           template.HTML
-	Username        template.HTML
-	Users           []User
+	Error    AppError
+	Title    template.HTML
+	Username template.HTML
+	Users    []User
 }
 
-func (app App) HandleError(w http.ResponseWriter, r *http.Request, err AppErr, opts HandlerOpts) {
+func (app App) LogCtx(r *http.Request, err error) *http.Request {
 	app.LogError(err)
-	if opts.View {
-		if err.Code == 401 {
-			// should allow login to redirect to original request URL with
-			// something like ?next=
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-		} else {
-			http.Error(w, http.StatusText(err.Code), err.Code)
-		}
-	} else {
-		http.Error(w, http.StatusText(err.Code), err.Code)
-	}
+	ctx := context.WithValue(r.Context(), "error", err)
+	return r.WithContext(ctx)
 }
 
 func (app App) Login(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		app.HandleError(w, r, AppErr{wstack(err), 500}, HandlerOpts{})
+		app.LoginView(w, app.LogCtx(r, AppError{wstack(err), ServerError}))
 		return
 	}
+
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	expiry := DefaultExpiry()
@@ -48,7 +39,8 @@ func (app App) Login(w http.ResponseWriter, r *http.Request) {
 		username + ":xxxxxxxx'")
 	tokenString, err := app.AuthToken(username, password, expiry)
 	if err != nil {
-		app.HandleError(w, r, AppErr{wstack(err), 401}, HandlerOpts{})
+		err = wmsg(err, "Login AuthToken failure")
+		app.LoginView(w, app.LogCtx(r, AppError{err, AuthError}))
 		return
 	}
 
@@ -106,7 +98,7 @@ func (app App) PageContext(ctx context.Context) PageContext {
 func (app App) SplashView(w http.ResponseWriter, r *http.Request) {
 	user, err := app.JwtUser(r.Context())
 	if err != nil {
-		app.HandleError(w, r, AppErr{wstack(err), 401}, HandlerOpts{View: true})
+		app.LoginView(w, app.LogCtx(r, AppError{wstack(err), AuthError}))
 		return
 	}
 	page := PageContext{
@@ -120,13 +112,15 @@ func (app App) SplashView(w http.ResponseWriter, r *http.Request) {
 func (app App) AdminView(w http.ResponseWriter, r *http.Request) {
 	user, err := app.JwtUser(r.Context())
 	if err != nil {
-		app.HandleError(w, r, AppErr{wstack(err), 500}, HandlerOpts{})
+		app.LoginView(w, app.LogCtx(r, AppError{wstack(err), ServerError}))
+		return
 	}
 
 	var users []User
 	err = app.Db.All(&users)
 	if err != nil {
-		app.HandleError(w, r, AppErr{wstack(err), 500}, HandlerOpts{})
+		app.LoginView(w, app.LogCtx(r, AppError{wstack(err), ServerError}))
+		return
 	}
 
 	for i, _ := range users {
@@ -145,10 +139,7 @@ func (app App) AdminView(w http.ResponseWriter, r *http.Request) {
 func (app App) AdminPost(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		err := AppErr{wstack(err), 500}
-		app.LogError(err)
-		ctx := context.WithValue(r.Context(), "error", err)
-		app.AdminView(w, r.WithContext(ctx))
+		app.AdminView(w, app.LogCtx(r, AppError{wstack(err), ServerError}))
 		return
 	}
 
@@ -163,28 +154,30 @@ func (app App) AdminPost(w http.ResponseWriter, r *http.Request) {
 	if method != "update" {
 		user, err = newUser(username, password)
 		if err != nil {
-			app.LogDebug("UserPost - newUser: " + err.Error())
-			ctx := context.WithValue(r.Context(), "NewUserError", AppErr{err, 400})
-			app.AdminView(w, r.WithContext(ctx))
+			app.AdminView(w, app.LogCtx(r, AppError{wstack(err), NewUserError}))
 			return
 		}
 	} else {
 		user = &User{}
 		err = app.Db.One("Name", username, user)
 		if err != nil {
-			app.LogDebug("UserPost - getUser: " + err.Error())
-			ctx := context.WithValue(r.Context(), "UpdateUserError", AppErr{err, 400})
-			app.AdminView(w, r.WithContext(ctx))
+			app.AdminView(w, app.LogCtx(r, AppError{wstack(err), UpdateUserError}))
 			return
+		}
+
+		if password != "" {
+			err = updatePassword(user, password)
+			if err != nil {
+				app.AdminView(w, app.LogCtx(r, AppError{err, UpdateUserError}))
+				return
+			}
 		}
 	}
 
 	user.Admin = admin == "on"
 	if err = app.Db.Save(user); err != nil {
-		err := AppErr{wstack(err), 500}
-		app.LogError(err)
-		ctx := context.WithValue(r.Context(), "error", err)
-		app.AdminView(w, r.WithContext(ctx))
+		app.AdminView(w, app.LogCtx(r, AppError{wstack(err), ServerError}))
+		return
 	}
 
 	app.AdminView(w, r)
@@ -199,14 +192,9 @@ func (app App) Render(w http.ResponseWriter, r *http.Request, view string, p Pag
 	}
 
 	ctx := r.Context()
-	error, ok := ctx.Value("NewUserError").(AppErr)
+	error, ok := ctx.Value("error").(AppError)
 	if ok {
-		p.NewUserError = error.Error()
-	}
-
-	error, ok = ctx.Value("UpdateUserError").(AppErr)
-	if ok {
-		p.UpdateUserError = error.Error()
+		p.Error = error
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
