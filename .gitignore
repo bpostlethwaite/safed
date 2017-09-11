@@ -1,3 +1,4 @@
 safed/safed
 safe.db
 *.test
+safed/rice-box.go
