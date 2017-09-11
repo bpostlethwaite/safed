@@ -1,4 +1,5 @@
 {{ define "content" }}
+{{ template "header" . }}
 <div id="admin-panel">
     <h2 class="header">New User</h2>
     {{if .Error.NewUserError}}<h4 style="color:red;">{{.Error.Error}}</h4>{{end}}
