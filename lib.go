@@ -1,6 +1,7 @@
 package safed
 
 import (
+	"context"
 	"html/template"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	rice "github.com/GeertJohan/go.rice"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/jwtauth"
 	"github.com/pkg/errors"
 )
 
@@ -92,4 +94,18 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	r.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fs.ServeHTTP(w, r)
 	}))
+}
+
+func ValidateToken(ctx context.Context) (jwtauth.Claims, error) {
+	token, claims, err := jwtauth.FromContext(ctx)
+	if err != nil {
+		return claims, errors.WithStack(err)
+	}
+
+	// jwt-auth automatically handles expirey using the 'exp' claim
+	if token == nil || !token.Valid {
+		return claims, errors.New("Invalid token")
+	}
+
+	return claims, nil
 }

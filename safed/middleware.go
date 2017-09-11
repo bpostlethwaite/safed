@@ -1,33 +1,17 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 
-	"github.com/go-chi/jwtauth"
+	"github.com/bpostlethwaite/safed"
 	"github.com/pkg/errors"
 )
-
-func validateToken(ctx context.Context) (jwtauth.Claims, error) {
-	token, claims, err := jwtauth.FromContext(ctx)
-	if err != nil {
-		return claims, AppError{wstack(err), AuthError}
-	}
-
-	// jwt-auth automatically handles expirey using the 'exp' claim
-	if token == nil || !token.Valid {
-		return claims, wstack(fmt.Errorf("Invalid token"))
-	}
-
-	return claims, nil
-}
 
 func (app App) Authenticator(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		if _, err := validateToken(r.Context()); err != nil {
-			app.LoginView(w, app.LogCtx(r, err))
+		if _, err := safed.ValidateToken(r.Context()); err != nil {
+			app.LoginView(w, app.LogCtx(r, AppError{err, AuthError}))
 			return
 		}
 
@@ -38,9 +22,9 @@ func (app App) Authenticator(next http.Handler) http.Handler {
 
 func (app App) AdminAuthenticator(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims, err := validateToken(r.Context())
+		claims, err := safed.ValidateToken(r.Context())
 		if err != nil {
-			app.LoginView(w, app.LogCtx(r, AppError{wstack(err), AuthError}))
+			app.LoginView(w, app.LogCtx(r, AppError{err, AuthError}))
 			return
 		}
 
